@@ -1,0 +1,907 @@
+# Starter benchmark set — NOT the full target.
+#
+# Target distribution (Phase 11): 20 UX/UI, 20 error/notification/validation,
+# 20 engineering/code/git, 15 business/product, 15 documentation,
+# 10 translation/localization = 100 cases.
+#
+# This file has 18 cases per-category-starter + 6 targeted failure-mode cases
+# (24 total) as a working set and a schema reference. Expanding to the full 100
+# needs native-speaker review this research pass didn't have access to — see
+# research/README.md open questions. Do not treat the counts below as complete.
+#
+# Deep-research pass note (benchmark quality review, per task section 9): the
+# original 18 cases were audited against the 10 failure modes the task names
+# (literal translation, bureaucratic Thai, unnecessary verbosity, wrong
+# register, context mismatch, terminology inconsistency, misleading
+# simplification, meaning changes, bad UX microcopy, bad code comments).
+# Covered already: literal translation (loc-001), bureaucratic Thai (ux-001,
+# biz-002), unnecessary verbosity (ux-003, notif-003), wrong register
+# (notif-001, biz-003), context mismatch (doc-003), bad UX microcopy (ux-002),
+# bad code comments (eng-001, eng-002). NOT covered until this pass: terminology
+# inconsistency, misleading simplification / meaning changes as an explicit
+# trap (a rewrite that reads natural/concise but silently drops a condition or
+# a specific value), and a false-positive control (formal/correct text a naive
+# grader might wrongly expect changed). The 6 cases below (term-001,
+# meaning-001, meaning-002, register-001, control-001, control-002) close those
+# gaps specifically — added for coverage of a real failure mode, not to pad
+# the count.
+#
+# Evidence Hardening pass note (section 12: adversarial "decide when NOT to
+# rewrite" cases): audited against the 9 adversarial scenarios that phase
+# names. Already covered: original-already-good (control-001, control-002),
+# formal-language-appropriate (register-001), shorter-changes-meaning
+# (meaning-001, meaning-002), useless-code-comment-removed (eng-002). Added
+# this pass to close the remaining gaps: tech-term-001 (retain English
+# technical term rather than force-translate), term-002 (product terminology
+# convention wins over a generic/dictionary preference), error-detail-001
+# (the UNDER-compression risk — a bare-fact error is wrong when severity/
+# recoverability actually requires full recovery guidance; this is the mirror
+# image of meaning-001/002, which test OVER-compression). "AI-looking phrase
+# actually appropriate" and "business requirement needs precision" were judged
+# adequately covered by register-001 + biz-context cases rather than needing a
+# distinct new case — see error-writing-research.md and terminology-research.md
+# for the research backing these three new cases.
+#
+# thai-writer pass (2026-11-09): adds punctuation/formatting AI-slop cases and
+# the first cases for non-software contexts (messaging, articles, social,
+# formal, documents, slides). See research/punctuation-formatting-research.md.
+
+- id: ux-001
+  context: ux-writing
+  audience: End User
+  input: "ดำเนินการต่อไปยังขั้นตอนถัดไป"
+  expected_characteristics:
+    - short, button-length
+    - active imperative
+  bad_examples:
+    - "ดำเนินการต่อไปยังขั้นตอนถัดไป"
+  good_examples:
+    - "ถัดไป"
+  evaluation_notes: >
+    ทำการ/ดำเนินการ padding on a one-word action is the redundant_verb_construction
+    pattern — see review/thai-ai-smells.md.
+
+- id: ux-002
+  context: ux-writing
+  audience: End User
+  input: "ข้อมูลที่ท่านกรอกไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง"
+  expected_characteristics:
+    - names the specific problem
+    - no generic "invalid data" phrasing
+  bad_examples:
+    - "ข้อมูลที่ท่านกรอกไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง"
+  good_examples:
+    - "เบอร์โทรต้องมี 10 หลัก"
+  evaluation_notes: >
+    Clarity failure, not a naturalness failure — every word here is natural Thai,
+    it just isn't actionable.
+
+- id: ux-003
+  context: ux-writing
+  audience: Customer
+  input: "ขออภัย ขณะนี้ยังไม่มีข้อมูลรายการโปรดของท่านปรากฏอยู่ในระบบ ท่านสามารถเพิ่มรายการโปรดได้โดยการกดที่ไอคอนรูปหัวใจ"
+  expected_characteristics:
+    - states what's missing and how to fill it
+    - no apology padding for an empty list
+  bad_examples:
+    - "ขออภัย ขณะนี้ยังไม่มีข้อมูลรายการโปรดของท่านปรากฏอยู่ในระบบ..."
+  good_examples:
+    - "ยังไม่มีรายการโปรด กดรูปหัวใจเพื่อเพิ่ม"
+  evaluation_notes: "Conciseness + over-explanation."
+
+- id: notif-001
+  context: notifications
+  audience: End User
+  input: "เราตรวจพบว่าอาจมีความพยายามในการเข้าถึงบัญชีของคุณโดยไม่ได้รับอนุญาตค่ะ กรุณาดำเนินการเปลี่ยนรหัสผ่านของคุณโดยเร็วที่สุดนะคะ"
+  expected_characteristics:
+    - direct imperative
+    - no politeness particles (severity justifies dropping them)
+  bad_examples:
+    - "เราตรวจพบว่าอาจมีความพยายาม...นะคะ"
+  good_examples:
+    - "พบความพยายามเข้าสู่ระบบที่ผิดปกติ เปลี่ยนรหัสผ่านทันที"
+  evaluation_notes: >
+    Tests that the grader does NOT penalize particle-dropping here — this is
+    core/anti-ai.md's severity-scales-formality case, not an AI-smell.
+
+- id: notif-002
+  context: notifications
+  audience: Customer
+  input: "ระบบตรวจพบว่ามีการทำรายการที่อาจจะผิดปกติเกิดขึ้นกับบัญชีของคุณเมื่อสักครู่นี้"
+  expected_characteristics:
+    - leads with the actionable fact, not a build-up
+  bad_examples:
+    - "ระบบตรวจพบว่ามีการทำรายการที่อาจจะผิดปกติเกิดขึ้นกับบัญชีของคุณเมื่อสักครู่นี้"
+  good_examples:
+    - "พบรายการผิดปกติในบัญชีของคุณ ตรวจสอบทันที"
+  evaluation_notes: "Push/toast is read in a glance — front-load the fact."
+
+- id: notif-003
+  context: notifications
+  audience: End User
+  input: "เราส่งข้อความนี้เพื่อแจ้งให้คุณทราบว่าพัสดุของคุณได้ถูกจัดส่งออกจากคลังสินค้าเรียบร้อยแล้วในวันนี้"
+  expected_characteristics:
+    - no meta-explanation of why the notification exists
+  bad_examples:
+    - "เราส่งข้อความนี้เพื่อแจ้งให้คุณทราบว่า..."
+  good_examples:
+    - "พัสดุของคุณจัดส่งแล้ว ถึงภายในวันนี้"
+  evaluation_notes: "over_explanation in a channel meant to be skimmed."
+
+- id: eng-001
+  context: code-comments
+  audience: Developer
+  input: "// ตรวจสอบว่ามีข้อมูลหรือไม่เพื่อดำเนินการในขั้นตอนถัดไป\nif (!order) return null;"
+  expected_characteristics:
+    - explains why, not what
+  bad_examples:
+    - "// ตรวจสอบว่ามีข้อมูลหรือไม่เพื่อดำเนินการในขั้นตอนถัดไป"
+  good_examples:
+    - "// ไม่มี Order ก็ไม่ต้องแสดงตาราง"
+  evaluation_notes: "The canonical worked example from SKILL.md."
+
+- id: eng-002
+  context: code-comments
+  audience: Developer
+  input: "// เพิ่มค่า count ขึ้นทีละ 1 หน่วย\ncount++;"
+  expected_characteristics:
+    - recommends deletion, not a rewrite
+  bad_examples:
+    - "any rewritten version that keeps a comment here"
+  good_examples:
+    - "(no comment)"
+  evaluation_notes: >
+    Tests that the grader recognizes "delete" as a valid, sometimes-correct output —
+    not every finding should produce a rewritten string.
+
+- id: eng-003
+  context: commits
+  audience: Developer
+  input: "ทำการแก้ไขปัญหาเกี่ยวกับการคำนวณราคาสินค้าที่ไม่ถูกต้องเมื่อมีการใช้ส่วนลดหลายรายการพร้อมกัน"
+  expected_characteristics:
+    - imperative mood
+    - no ทำการ padding
+  bad_examples:
+    - "ทำการแก้ไขปัญหาเกี่ยวกับการคำนวณราคาสินค้าที่ไม่ถูกต้อง..."
+  good_examples:
+    - "แก้: คำนวณราคาผิดเมื่อใช้ส่วนลดซ้อนกันหลายรายการ"
+  evaluation_notes: "redundant_verb_construction at commit-subject length."
+
+- id: biz-001
+  context: requirements
+  audience: [Product Manager, Developer, QA]
+  input: "ระบบต้องสามารถจัดการกับกรณีที่ผู้ใช้ยังไม่ได้ยืนยันอีเมลของตนเองในขณะที่พยายามเข้าสู่ระบบได้อย่างเหมาะสม"
+  expected_characteristics:
+    - testable condition
+    - Given/When/Then labels kept in English
+  bad_examples:
+    - "ระบบต้องสามารถจัดการ...ได้อย่างเหมาะสม"
+  good_examples:
+    - "Given ผู้ใช้ยังไม่ยืนยันอีเมล\nWhen ผู้ใช้พยายามเข้าสู่ระบบ\nThen ระบบแสดงข้อความให้ยืนยันอีเมลก่อน"
+  evaluation_notes: "\"Handle appropriately\" is the untestable-qualifier smell."
+
+- id: biz-002
+  context: requirements
+  audience: [Product Manager, Developer]
+  input: "ยกเลิกออเดอร์ไม่ได้หลัง 24 ชั่วโมงเพราะระบบคลังสินค้าตัดสต๊อกไปแล้วและการคืนสต๊อกทำได้ยากในทางปฏิบัติ"
+  expected_characteristics:
+    - rule and rationale separated
+  bad_examples:
+    - "ยกเลิกออเดอร์ไม่ได้หลัง 24 ชั่วโมงเพราะ..."
+  good_examples:
+    - "Rule: ยกเลิกออเดอร์ได้เฉพาะภายใน 24 ชั่วโมงหลังสั่งซื้อ / Note: เหตุผล — ระบบคลังตัดสต๊อกอัตโนมัติหลัง 24 ชั่วโมง"
+  evaluation_notes: "ในกรณีที่-style precision is CORRECT register here — grader must not penalize formality."
+
+- id: biz-003
+  context: pull-requests
+  audience: [Developer, QA]
+  input: "เรียนท่านผู้บริหาร ทางทีมพัฒนาใคร่ขอเรียนให้ทราบว่าในขณะนี้ได้ดำเนินการแก้ไขปัญหาที่ท่านได้แจ้งมาเรียบร้อยแล้ว ทั้งนี้ ระบบสามารถใช้งานได้ตามปกติแล้วในขณะนี้"
+  expected_characteristics:
+    - register matches internal-team audience, not external-letter formality
+  bad_examples:
+    - "เรียนท่านผู้บริหาร ทางทีมพัฒนาใคร่ขอเรียนให้ทราบว่า..."
+  good_examples:
+    - "แก้บั๊กที่แจ้งไว้เรียบร้อยแล้ว ระบบใช้งานได้ปกติ"
+  evaluation_notes: "Audience Fit dimension specifically: over-formalized for who's actually reading."
+
+- id: doc-001
+  context: documentation
+  audience: Developer
+  input: "ในปัจจุบันการพัฒนาซอฟต์แวร์มีความสำคัญมากขึ้นเรื่อยๆ และการจัดการข้อมูลอย่างมีประสิทธิภาพก็เป็นสิ่งจำเป็น โปรเจกต์นี้จึงถูกสร้างขึ้นมาเพื่อช่วยแก้ปัญหาดังกล่าว"
+  expected_characteristics:
+    - leads with what the project does, first sentence
+  bad_examples:
+    - "ในปัจจุบันการพัฒนาซอฟต์แวร์มีความสำคัญมากขึ้นเรื่อยๆ..."
+  good_examples:
+    - "โปรเจกต์นี้จัดการคิวงานพื้นหลังสำหรับระบบที่มี throughput สูง"
+  evaluation_notes: "Also contains ดังกล่าว used as vague back-reference — bureaucratic_reference_words."
+
+- id: doc-002
+  context: documentation
+  audience: Developer
+  input: "คุณอาจจะต้องพิจารณาตั้งค่า API key ของท่านในไฟล์ .env ก่อนที่จะเริ่มต้นใช้งาน"
+  expected_characteristics:
+    - direct imperative instruction
+  bad_examples:
+    - "คุณอาจจะต้องพิจารณาตั้งค่า..."
+  good_examples:
+    - "ตั้งค่า API key ในไฟล์ .env ก่อนเริ่มใช้งาน"
+  evaluation_notes: "API docs need literal, testable instructions, not hedges."
+
+- id: doc-003
+  context: customer-facing
+  audience: Customer
+  input: "ปรับปรุง indexing algorithm ของระบบค้นหาให้มีประสิทธิภาพมากขึ้น"
+  expected_characteristics:
+    - user-benefit framing, not internal implementation detail
+  bad_examples:
+    - "ปรับปรุง indexing algorithm ของระบบค้นหาให้มีประสิทธิภาพมากขึ้น"
+  good_examples:
+    - "ค้นหาสินค้าได้เร็วขึ้น"
+  evaluation_notes: "Public changelog vs. internal release note — audience determines the framing."
+
+- id: loc-001
+  context: customer-facing
+  audience: End User
+  input: "กระเป๋าใบนี้ถูกออกแบบมาเพื่อรองรับการใช้งานในชีวิตประจำวัน"
+  expected_characteristics:
+    - active voice, no passive calque
+  bad_examples:
+    - "กระเป๋าใบนี้ถูกออกแบบมาเพื่อรองรับการใช้งานในชีวิตประจำวัน"
+  good_examples:
+    - "กระเป๋าใบนี้ออกแบบมาให้ใช้งานง่ายในชีวิตประจำวัน"
+  evaluation_notes: "passive_calque — translated English passive, not natural Thai default."
+
+- id: loc-002
+  context: ux-writing
+  audience: End User
+  input: "เสื้อยืด 3 ชิ้น รองเท้า 2 ชิ้น"
+  expected_characteristics:
+    - correct classifier per noun
+  bad_examples:
+    - "เสื้อยืด 3 ชิ้น รองเท้า 2 ชิ้น"
+  good_examples:
+    - "เสื้อยืด 3 ตัว รองเท้า 2 คู่"
+  evaluation_notes: "classifier_errors — correctness check, not a style judgment."
+
+- id: loc-003
+  context: ux-writing
+  audience: End User
+  input: "ให้ Perfect Skin ของคุณด้วย Premium Quality Serum ตัวนี้"
+  expected_characteristics:
+    - no Title Case English bleed for descriptive (non-proper-noun) phrases
+  bad_examples:
+    - "ให้ Perfect Skin ของคุณด้วย Premium Quality Serum ตัวนี้"
+  good_examples:
+    - "เซรั่มสูตรพรีเมียม ช่วยให้ผิวคุณดูดีขึ้น"
+  evaluation_notes: "title_case_english_bleed — exempt only for actual proper nouns/feature names."
+
+# --- Targeted failure-mode cases added in the deep-research pass (section 9) ---
+
+- id: term-001
+  context: ux-writing
+  audience: Customer
+  input: "หน้าแรกใช้ \"รายการสั่งซื้อ\" หน้าประวัติใช้ \"คำสั่งซื้อ\" การแจ้งเตือนใช้ \"ออเดอร์\" — ทั้งสามคำหมายถึงสิ่งเดียวกัน"
+  expected_characteristics:
+    - flags the SAME entity getting three different Thai renderings
+    - does not just judge each individual string in isolation
+  bad_examples:
+    - "adding a fourth acceptable synonym instead of picking one"
+  good_examples:
+    - "pick one term (e.g. \"รายการสั่งซื้อ\"), record it in the product glossary, apply everywhere"
+  evaluation_notes: >
+    Terminology Consistency dimension specifically. A grader that scores each of the
+    three individual strings as "natural Thai" (they are, individually) and misses the
+    cross-surface inconsistency is failing this case even with a fluent-looking answer.
+
+- id: meaning-001
+  context: ux-writing
+  audience: End User
+  input: "ปุ่มนี้จะปิดใช้งานเมื่อตะกร้าว่างเปล่า หรือเมื่อยังไม่ได้ยืนยันที่อยู่จัดส่ง"
+  expected_characteristics:
+    - preserves BOTH disabling conditions and the OR relationship
+  bad_examples:
+    - "ปุ่มนี้จะปิดใช้งานเมื่อตะกร้าว่างเปล่า"
+    - "ปุ่มจะกดไม่ได้ถ้าข้อมูลไม่ครบ"
+  good_examples:
+    - "ปุ่มนี้ปิดใช้งานเมื่อตะกร้าว่าง หรือยังไม่ยืนยันที่อยู่จัดส่ง"
+  evaluation_notes: >
+    This is a MISLEADING-SIMPLIFICATION trap, not a naturalness test. Both bad_examples
+    read as perfectly natural, concise Thai — that's exactly the danger. The first
+    silently drops the second condition (a real meaning change); the second is vague
+    enough to hide which conditions actually apply. A grader must score both LOW on
+    Meaning Preservation despite high Naturalness/Conciseness scores — conciseness
+    must never be allowed to outweigh a dropped condition. See core/meaning-preservation.md.
+
+- id: meaning-002
+  context: ux-writing
+  audience: Customer
+  input: "คืนเงินเต็มจำนวนภายใน 14 วันหากสินค้ามีตำหนิจากการผลิต ไม่รวมความเสียหายจากการใช้งานผิดวิธี"
+  expected_characteristics:
+    - keeps the exact timeframe (14 days), the exact condition (manufacturing defect),
+      and the exact exclusion (misuse damage)
+  bad_examples:
+    - "คืนเงินเต็มจำนวนถ้าสินค้ามีปัญหา"
+    - "คืนเงินภายใน 2 สัปดาห์หากสินค้าเสียหาย"
+  good_examples:
+    - "คืนเงินเต็มจำนวนภายใน 14 วัน ถ้าสินค้ามีตำหนิจากการผลิต (ไม่รวมความเสียหายจากการใช้งานผิดวิธี)"
+  evaluation_notes: >
+    Another MEANING-CHANGE trap. The first bad_example drops the timeframe and the
+    misuse exclusion entirely — a policy-relevant omission, not a style simplification.
+    The second looks like a faithful rewrite but silently rounds "14 days" to "2 weeks"
+    (same in English, but "14 วัน" and "2 สัปดาห์" are not guaranteed interchangeable in
+    a policy document a customer might hold the company to literally) and drops the
+    manufacturing-defect qualifier, widening the refund condition beyond what was
+    stated. Score Meaning Preservation low on both despite natural-sounding Thai.
+
+- id: register-001
+  context: requirements
+  audience: [Product Manager, Developer, QA]
+  input: "ในกรณีที่ผู้ใช้ยกเลิกการสมัครสมาชิกก่อนครบกำหนดชำระเงินรอบถัดไป ทั้งนี้ ระบบจะไม่คืนเงินค่าบริการที่ชำระไปแล้วตามที่ระบุไว้ในข้อตกลงการใช้บริการดังกล่าว"
+  expected_characteristics:
+    - recognizes this is a ToS/business-rule clause where formal register is CORRECT
+    - does not strip ในกรณีที่ / ทั้งนี้ / ดังกล่าว just because they appear on a
+      "words to watch" list
+  bad_examples:
+    - "ถ้ายกเลิกก่อนรอบชำระเงินถัดไป จะไม่คืนเงินนะ"
+  good_examples:
+    - "ในกรณีที่ผู้ใช้ยกเลิกการสมัครสมาชิกก่อนครบกำหนดชำระเงินรอบถัดไป ทั้งนี้ ระบบจะไม่คืนเงินค่าบริการที่ชำระไปแล้วตามที่ระบุไว้ในข้อตกลงการใช้บริการดังกล่าว"
+  evaluation_notes: >
+    WRONG-REGISTER trap in the opposite direction from notif-001: here the "improved"
+    bad_example over-casualizes a legal/business-rule clause, which is worse, not
+    better. This is the benchmark's direct test of the project's core "no blacklist"
+    design goal (core/anti-ai.md) — a grader/skill that reflexively flags and rewrites
+    every instance of these five words fails this case even though the output sounds
+    more natural in a vacuum.
+
+- id: control-001
+  context: code-comments
+  audience: Developer
+  input: "// workaround สำหรับ Safari bug ที่ทำให้ flexbox gap ไม่ทำงานถูกต้องใน iOS < 14.5 อย่าลบ comment นี้จนกว่าจะ drop support เวอร์ชันเก่า"
+  expected_characteristics:
+    - recognizes this comment already explains a real, non-obvious constraint
+    - recommends NO CHANGE
+  bad_examples:
+    - "any rewritten version, however natural-sounding, that changes or removes this comment"
+  good_examples:
+    - "(no change — comment is already correct)"
+  evaluation_notes: >
+    FALSE-POSITIVE control. This tests whether the skill/grader can recognize "already
+    correct, leave it alone" as a valid output, distinct from every other case in this
+    file which expects some change. A skill that always finds something to rewrite
+    (even when told explicitly to evaluate) fails this case regardless of how good the
+    rewrite sounds — see core/anti-ai.md and product-thai-corpus.md's control-case note.
+
+- id: control-002
+  context: ux-writing
+  audience: Developer
+  input: "เกิดข้อผิดพลาด: 500"
+  expected_characteristics:
+    - recognizes a raw status code is the CORRECT level of detail for this
+      developer-facing surface (e.g. an internal admin panel)
+  bad_examples:
+    - "อุ๊ปส์! มีบางอย่างผิดพลาด ลองใหม่อีกครั้งนะ"
+  good_examples:
+    - "เกิดข้อผิดพลาด: 500"
+  evaluation_notes: >
+    Second false-positive control, this time an AUDIENCE-FIT trap: "humanizing" a
+    developer-facing technical error into vague, friendly end-user copy actually
+    destroys information (the status code) that this specific audience needs. Tests
+    that Audience Fit scoring doesn't default to "friendlier is always better."
+
+# --- Adversarial "decide when NOT to rewrite" cases added in the Evidence Hardening pass (section 12) ---
+
+- id: tech-term-001
+  context: documentation
+  audience: Developer
+  input: "ตั้งค่า API key ในไฟล์ .env ก่อนเริ่มใช้งาน"
+  expected_characteristics:
+    - keeps "API key" and ".env" in English, untranslated
+  bad_examples:
+    - "ตั้งค่ากุญแจ API ในไฟล์สภาพแวดล้อมก่อนเริ่มใช้งาน"
+  good_examples:
+    - "ตั้งค่า API key ในไฟล์ .env ก่อนเริ่มใช้งาน"
+  evaluation_notes: >
+    TECHNICAL-TERM-RETENTION trap. "กุญแจ API" (literally "API key" translated word-for-word)
+    and "ไฟล์สภาพแวดล้อมก่อนเริ่มใช้งาน" (a literal translation of "environment file") are
+    unnatural technical terminology no real Thai developer uses or would recognize —
+    see taxonomy id unnatural-technical-terminology. A grader that rewards translating
+    every English word on principle fails this case; the correct behavior is recognizing
+    these specific terms are conventionally kept in English in real Thai dev culture.
+
+- id: term-002
+  context: ux-writing
+  audience: End User
+  input: "ล็อกอิน"
+  expected_characteristics:
+    - respects the STATED product glossary choice over a generic/dictionary preference
+  bad_examples:
+    - "เข้าสู่ระบบ (แก้ตามหลักภาษาไทยที่ถูกต้อง)"
+  good_examples:
+    - "ล็อกอิน"
+  evaluation_notes: >
+    PRODUCT-TERMINOLOGY-WINS trap. Given context that this product's own glossary has
+    already recorded "ล็อกอิน" as its house choice (both "ล็อกอิน" and "เข้าสู่ระบบ" are
+    legitimate, widely-used renderings — see terminology-research.md, no universal answer
+    exists), a grader/skill that "corrects" it to the other legitimate option because it
+    seems more standard is WRONG — terminology/terminology.md is explicit that per-product
+    convention overrides generic preference once a choice is recorded. This case only makes
+    sense with the glossary context stated; without it, either rendering would be acceptable.
+
+- id: error-detail-001
+  context: notifications
+  audience: Customer
+  input: "การชำระเงินไม่สำเร็จ"
+  expected_characteristics:
+    - recognizes this specific context (a failed payment, cause known, user has a real
+      choice of remedies) needs Level 3 detail (fact + cause + action), not just the fact
+  bad_examples:
+    - "การชำระเงินไม่สำเร็จ"
+    - "การชำระเงินไม่สำเร็จ ลองอีกครั้ง"
+  good_examples:
+    - "การชำระเงินไม่สำเร็จ เพราะบัตรถูกปฏิเสธ ลองบัตรอื่นหรือติดต่อธนาคาร"
+  evaluation_notes: >
+    UNDER-COMPRESSION trap — the mirror image of meaning-001/meaning-002, which test
+    rewrites that cut TOO much. Here, per error-writing-research.md's three-level
+    framework, a payment failure with a known cause and real remedy choices is exactly
+    the case that needs Level 3, not Level 1 — a grader that rewards the shortest
+    "cleanest-sounding" answer regardless of whether the situation calls for more detail
+    fails this case. Conciseness must never be graded independently of whether the
+    situation's severity/recoverability/user-control actually justifies the added detail.
+
+# --- thai-writer pass (2026-11-09): punctuation, formatting, structure and non-software contexts ---
+
+- id: punct-001
+  context: messaging
+  audience: เพื่อนร่วมงาน
+  input: "พรุ่งนี้ประชุม 10 โมง — ห้องเดิมนะครับ"
+  expected_characteristics:
+    - removes the em dash and lets a space do the separating
+    - keeps 10 โมง, ห้องเดิม and the existing นะครับ exactly; adds nothing
+  bad_examples:
+    - "พรุ่งนี้ประชุม 10 โมง, ห้องเดิมนะครับ"
+    - "พรุ่งนี้มีการประชุมเวลา 10.00 น. ณ ห้องประชุมเดิมครับ"
+  good_examples:
+    - "พรุ่งนี้ประชุม 10 โมง ห้องเดิมนะครับ"
+  evaluation_notes: >
+    Simplest case of the "Em dash in Thai prose" row in review/thai-ai-smells.md and the
+    first table in core/punctuation.md: a single `—` in a chat message is replaced by
+    a space and nothing else changes. Traps: swapping the dash for a comma (the
+    "Comma swapped in for em dash" row) and "fixing" the message into a formal notice,
+    which breaks the colleague register in contexts/messaging.md.
+
+- id: punct-002
+  context: articles
+  audience: ผู้อ่านทั่วไป
+  input: "กาแฟตอนบ่ายส่งผลต่อการนอนมากกว่าที่คิด — คาเฟอีนอยู่ในร่างกายได้นาน 5–6 ชั่วโมง ถ้าดื่มแก้วสุดท้ายตอนบ่ายสาม — ตอนสามทุ่มก็ยังเหลือคาเฟอีนอยู่ราวครึ่งหนึ่ง — ทำให้หลับยากและตื่นกลางดึกบ่อยขึ้น"
+  expected_characteristics:
+    - rewrites each em dash with the connector it stands for (เพราะ, จึง) or a space
+    - keeps the en dash in 5–6 ชั่วโมง because it marks a numeric range
+    - keeps every fact (5–6 ชั่วโมง, บ่ายสาม, สามทุ่ม, ราวครึ่งหนึ่ง)
+  bad_examples:
+    - "กาแฟตอนบ่ายส่งผลต่อการนอนมากกว่าที่คิด, คาเฟอีนอยู่ในร่างกายได้นาน 5–6 ชั่วโมง ถ้าดื่มแก้วสุดท้ายตอนบ่ายสาม, ตอนสามทุ่มก็ยังเหลือคาเฟอีนอยู่ราวครึ่งหนึ่ง, ทำให้หลับยากและตื่นกลางดึกบ่อยขึ้น"
+    - "กาแฟตอนบ่ายทำให้นอนไม่หลับ เพราะคาเฟอีนอยู่ในร่างกายได้นาน"
+  good_examples:
+    - "กาแฟตอนบ่ายส่งผลต่อการนอนมากกว่าที่คิด เพราะคาเฟอีนอยู่ในร่างกายได้นาน 5–6 ชั่วโมง ถ้าดื่มแก้วสุดท้ายตอนบ่ายสาม ตอนสามทุ่มก็ยังเหลือคาเฟอีนอยู่ราวครึ่งหนึ่ง จึงหลับยากและตื่นกลางดึกบ่อยขึ้น"
+  evaluation_notes: >
+    Tests the "Em dash in Thai prose" row in review/thai-ai-smells.md at its strongest
+    signal: three `—` in one paragraph. core/punctuation.md asks for the real
+    connector, not a symbol swap, so the comma version fails. Two side traps: the en
+    dash in `5–6` is a legitimate range (core/punctuation.md, "ตัดสินตามบริบท") and must
+    survive, and the shortened rewrite drops the numbers and times, which is a
+    meaning-preservation failure even though it reads clean.
+
+- id: punct-003
+  context: documents
+  audience: เพื่อนร่วมงาน
+  input: "ยื่นคำขอ → หัวหน้าอนุมัติ → การเงินโอน"
+  expected_characteristics:
+    - replaces arrows with Thai connectors or a numbered list
+    - keeps the three steps in the same order and adds no new step, deadline or condition
+  bad_examples:
+    - "ยื่นคำขอ -> หัวหน้าอนุมัติ -> การเงินโอน"
+    - "ยื่นคำขอ, หัวหน้าอนุมัติ, การเงินโอน"
+    - "ยื่นคำขอ แล้วรอหัวหน้าอนุมัติภายใน 3 วันทำการ จากนั้นการเงินจะโอนเงินเข้าบัญชี"
+  good_examples:
+    - "ยื่นคำขอ พอหัวหน้าอนุมัติแล้ว การเงินจะโอนเงิน"
+    - |
+      1. ยื่นคำขอ
+      2. หัวหน้าอนุมัติ
+      3. การเงินโอนเงิน
+  evaluation_notes: >
+    "Symbols standing in for connectors" row in review/thai-ai-smells.md; the
+    documents context (contexts/documents.md, คู่มือและวิธีใช้) bans arrows between
+    steps. Traps: an ASCII `->` is the same habit and not a fix, a comma list loses the
+    sequence, and the third bad example invents a deadline and a destination account
+    while "making it clearer" (core/meaning-preservation.md).
+
+- id: punct-004
+  context: articles
+  audience: ผู้อ่านทั่วไป
+  input: "ผลสำรวจลูกค้า 1,200 คนให้คำตอบที่ชัดเจน, คนส่วนใหญ่อยากให้ส่งของเร็วขึ้นมากกว่าได้ส่วนลด"
+  expected_characteristics:
+    - rebuilds the two-half set-up/reveal into one Thai sentence joined with ว่า
+    - keeps the comma inside 1,200 (number grouping is not the problem)
+    - keeps the survey size and the speed-versus-discount finding
+  bad_examples:
+    - "ผลสำรวจลูกค้า 1,200 คนให้คำตอบที่ชัดเจน: คนส่วนใหญ่อยากให้ส่งของเร็วขึ้นมากกว่าได้ส่วนลด"
+    - "ผลสำรวจบอกชัดว่าลูกค้าอยากให้ส่งของเร็วขึ้น"
+  good_examples:
+    - "ผลสำรวจลูกค้า 1,200 คนบอกชัดว่าคนส่วนใหญ่อยากให้ส่งของเร็วขึ้นมากกว่าได้ส่วนลด"
+  evaluation_notes: >
+    ADVERSARIAL. Tests the "Comma swapped in for em dash" row in
+    review/thai-ai-smells.md and core/punctuation.md, "อย่าแค่สลับเครื่องหมาย": the
+    input has no `—`, so a dash-only check passes it, but the sentence is still an
+    English set-up half plus reveal half. Swapping the comma for a colon keeps the
+    structure and fails. The fix is ว่า. The last bad example drops the survey size and the comparison with
+    discounts. `มากกว่า` here is a real survey comparison, not the negative-parallelism
+    pattern.
+
+- id: punct-005
+  context: formal
+  audience: หน่วยงานราชการ/งานวิชาการ
+  input: "ประชุมวันที่ 12–14 พฤศจิกายน 2569"
+  expected_characteristics:
+    - recognizes the en dash marks a date range, which is its legitimate use
+    - recommends NO CHANGE
+  bad_examples:
+    - "any rewrite that treats the en dash as AI slop and changes it"
+    - "ประชุมวันที่ 12 และ 14 พฤศจิกายน 2569"
+  good_examples:
+    - "(no change — already correct)"
+  evaluation_notes: >
+    FALSE-POSITIVE control, ADVERSARIAL. core/punctuation.md, "ตัดสินตามบริบท", lists
+    the en dash `–` as fine for numeric, time and date ranges. A skill that pattern-
+    matches every dash-like character as the em dash smell fails here. The second bad
+    example shows the cost of a careless fix: `12 และ 14` turns a three-day meeting
+    into two separate days.
+
+- id: punct-006
+  context: documents
+  audience: เพื่อนร่วมงาน
+  input: |
+    เช็กว่า commit ล่าสุดขึ้น main แล้วหรือยัง
+    ```text
+    $ git log --oneline -1
+    a1b2c3d (HEAD -> main) แก้หน้า login
+    ```
+    ถ้าในวงเล็บมีคำว่า main แปลว่า commit นี้อยู่บน branch main แล้ว
+  expected_characteristics:
+    - recognizes the arrow sits inside a code block, an explicit exception
+    - recommends NO CHANGE
+  bad_examples:
+    - "any rewrite that changes -> inside the code block"
+    - |
+      เช็กว่า commit ล่าสุดขึ้น main แล้วหรือยัง
+      ```text
+      $ git log --oneline -1
+      a1b2c3d (HEAD ชี้ไปที่ main) แก้หน้า login
+      ```
+      ถ้าในวงเล็บมีคำว่า main แปลว่า commit นี้อยู่บน branch main แล้ว
+  good_examples:
+    - "(no change — already correct)"
+  evaluation_notes: >
+    FALSE-POSITIVE control, ADVERSARIAL. core/punctuation.md exempts code, and the
+    "Symbols standing in for connectors" row in review/thai-ai-smells.md lists code
+    under "When it's fine". The `->` is literal `git log` output inside a fenced block,
+    not a step chain, so "fixing" it would make the sample disagree with what the
+    reader sees in the terminal. The prose around it already uses plain Thai. A grader
+    that greps for `->` without checking whether it is inside code fails this case.
+
+- id: format-001
+  context: messaging
+  audience: End User
+  input: |
+    ## คำตอบ
+
+    - **จองได้หรือไม่:** ได้ครับ
+    - **วันที่รับจอง:** ทุกวัน รวมถึงวันอาทิตย์
+    - **เงื่อนไข:** ต้องจองล่วงหน้าอย่างน้อย 1 วัน
+  expected_characteristics:
+    - answers yes/no in the first words, in plain sentences
+    - no heading, no bullets, no bold labels for a three-fact answer
+    - keeps every fact (ได้, ทุกวัน รวมถึงวันอาทิตย์, จองล่วงหน้าอย่างน้อย 1 วัน)
+  bad_examples:
+    - "**ได้ครับ** รับจองทุกวัน รวมถึงวันอาทิตย์ ต้องจองล่วงหน้าอย่างน้อย 1 วัน"
+    - "จองได้ครับ"
+  good_examples:
+    - "จองได้ครับ รับจองทุกวัน รวมถึงวันอาทิตย์ แต่ต้องจองล่วงหน้าอย่างน้อย 1 วัน"
+  evaluation_notes: >
+    Markdown heavier than the content: core/formatting.md, "คำตอบในแชท", plus the
+    "Bold label + colon on every line" row in review/thai-ai-smells.md. A heading and
+    three labelled bullets wrap three short facts that fit in one sentence. Traps: keeping a bolded answer (formatting still decorates a one-line
+    reply) and over-trimming to `จองได้ครับ`, which drops the one-day-ahead condition.
+
+- id: format-002
+  context: messaging
+  audience: เพื่อนร่วมงาน (กลุ่ม LINE)
+  input: "**ด่วน** พรุ่งนี้ลูกค้าเข้ามาดูหน้างาน 9 โมงเช้า ทุกคนเข้าไซต์ก่อน 8 โมงครึ่งนะครับ"
+  expected_characteristics:
+    - removes the asterisks because LINE shows them as literal characters
+    - keeps the urgency word, both times and the existing นะครับ
+  bad_examples:
+    - "*ด่วน* พรุ่งนี้ลูกค้าเข้ามาดูหน้างาน 9 โมงเช้า ทุกคนเข้าไซต์ก่อน 8 โมงครึ่งนะครับ"
+    - "🚨ด่วน🚨 พรุ่งนี้ลูกค้าเข้ามาดูหน้างาน 9 โมงเช้า ทุกคนเข้าไซต์ก่อน 8 โมงครึ่งนะครับ"
+    - "ด่วน พรุ่งนี้ลูกค้าเข้ามาดูหน้างานตอนเช้า ทุกคนมาให้ทันนะครับ"
+  good_examples:
+    - "ด่วน พรุ่งนี้ลูกค้าเข้ามาดูหน้างาน 9 โมงเช้า ทุกคนเข้าไซต์ก่อน 8 โมงครึ่งนะครับ"
+    - "เรื่องด่วน พรุ่งนี้ลูกค้าเข้ามาดูหน้างาน 9 โมงเช้า ทุกคนเข้าไซต์ก่อน 8 โมงครึ่งนะครับ"
+  evaluation_notes: >
+    Markdown in a channel that does not render it: core/formatting.md, "ดูช่องทางก่อน",
+    and contexts/messaging.md (LINE shows `**` as text). Only the markup goes; the word
+    ด่วน carries the urgency on its own. Traps: single-asterisk "bold" is the same
+    problem, adding siren emoji decorates instead of fixing (core/formatting.md,
+    Emoji), and the third bad example loses both clock times.
+
+- id: format-003
+  context: documents
+  audience: เพื่อนร่วมงาน
+  input: |
+    **ประเด็น:** งบจัดงานปีใหม่
+    **ผล:** อนุมัติ 80,000 บาท
+    **ประเด็น:** สถานที่จัดงาน
+    **ผล:** ยังไม่สรุป รอใบเสนอราคาจากโรงแรม 2 แห่ง
+    **ประเด็น:** ผู้ประสานงาน
+    **ผล:** คุณแพรรับผิดชอบ
+  expected_characteristics:
+    - drops the repeated bold label + colon pairs
+    - leads with decisions, then what is still open, per contexts/documents.md
+    - keeps 80,000 บาท, โรงแรม 2 แห่ง and คุณแพร; invents no owner or date for the open item
+  bad_examples:
+    - |
+      📌 งบจัดงานปีใหม่: อนุมัติ 80,000 บาท
+      📌 สถานที่จัดงาน: ยังไม่สรุป
+      📌 ผู้ประสานงาน: คุณแพร
+    - |
+      ตัดสินใจ
+      1. อนุมัติงบจัดงานปีใหม่ 80,000 บาท
+      2. คุณแพรเป็นผู้ประสานงาน และหาสถานที่ให้เสร็จภายในสัปดาห์หน้า
+  good_examples:
+    - |
+      ตัดสินใจ
+      1. อนุมัติงบจัดงานปีใหม่ 80,000 บาท
+      2. คุณแพรเป็นผู้ประสานงาน
+
+      ยังไม่สรุป
+      1. สถานที่จัดงาน รอใบเสนอราคาจากโรงแรม 2 แห่ง (ยังไม่มีผู้รับผิดชอบ)
+  evaluation_notes: >
+    "Bold label + colon on every line" row in review/thai-ai-smells.md and
+    core/formatting.md, Bullet. The labels ประเด็น/ผล repeat on every line and carry no
+    information. A meeting summary is not a spec sheet scanned by label, so the
+    "When it's fine" column does not apply. Traps: emoji labels are the same pattern
+    in a new costume and also lose "2 แห่ง", and the second bad example invents an
+    owner and a deadline for the venue, which contexts/documents.md forbids.
+
+- id: format-004
+  context: social
+  audience: เพื่อน/คนสนิท
+  input: "วิ่งครบ 10 กิโลครั้งแรกในชีวิต ขาสั่นไปหมดแต่ดีใจมาก 🥹 ปีหน้าขอลองฮาล์ฟมาราธอนดูสักครั้ง 🏃"
+  expected_characteristics:
+    - recognizes the two emoji are the author's own voice, placed after feelings, not leading lines
+    - recommends NO CHANGE
+  bad_examples:
+    - "วิ่งครบ 10 กิโลครั้งแรกในชีวิต ขาสั่นไปหมดแต่ดีใจมาก ปีหน้าขอลองฮาล์ฟมาราธอนดูสักครั้ง"
+    - "วันนี้วิ่งครบระยะ 10 กิโลเมตรได้เป็นครั้งแรก ปีหน้าตั้งเป้าลงแข่งฮาล์ฟมาราธอน #วิ่ง #แรงบันดาลใจ"
+  good_examples:
+    - "(no change — already correct)"
+  evaluation_notes: >
+    FALSE-POSITIVE control, ADVERSARIAL. core/formatting.md, Emoji, and
+    contexts/social.md both say to keep emoji the author already used. The smell is
+    emoji leading every line beside bold labels ("Listicle emoji spam" row in
+    review/thai-ai-smells.md), not two emoji at the end of a feeling. Traps: deleting
+    them "for cleanliness" and polishing the casual post into written Thai with
+    invented hashtags.
+
+- id: struct-001
+  context: articles
+  audience: ผู้อ่านทั่วไป
+  input: "คนไทยจ่ายเงินผ่าน QR มากขึ้นทุกปี ร้านข้าวแกงริมทางเกือบทุกร้านมีป้าย QR แปะไว้หน้าร้าน นี่ไม่ใช่แค่เทรนด์ แต่คือการเปลี่ยนแปลงครั้งใหญ่"
+  expected_characteristics:
+    - cuts or replaces the "ไม่ใช่แค่ X แต่คือ Y" sentence; the facts before it already make the point
+    - adds no statistic or claim the input does not contain
+  bad_examples:
+    - "คนไทยจ่ายเงินผ่าน QR มากขึ้นทุกปี ร้านข้าวแกงริมทางเกือบทุกร้านมีป้าย QR แปะไว้หน้าร้าน นี่ไม่ได้เป็นเพียงกระแส แต่เป็นการเปลี่ยนแปลงครั้งสำคัญ"
+    - "คนไทยจ่ายเงินผ่าน QR มากขึ้นปีละ 30% ร้านข้าวแกงริมทางเกือบทุกร้านมีป้าย QR แปะไว้หน้าร้าน"
+  good_examples:
+    - "คนไทยจ่ายเงินผ่าน QR มากขึ้นทุกปี ร้านข้าวแกงริมทางเกือบทุกร้านมีป้าย QR แปะไว้หน้าร้าน"
+  evaluation_notes: >
+    Negative parallelism: the "Not just X but Y calque / negative parallelism" row in
+    review/thai-ai-smells.md and core/natural-thai.md, "ประโยคแบบ ไม่ใช่ X แต่คือ Y". Nobody
+    claimed QR payment was a mere trend, so the denial has no job. Input is the brief's
+    sentence placed after two real facts so the case is gradable. Traps: rewording the
+    same frame with synonyms, and inventing a growth figure to "back up" the claim.
+
+- id: struct-002
+  context: messaging
+  audience: End User
+  input: |
+    แน่นอน! คำถามที่ดีมากครับ
+
+    ไข่ต้มทั้งเปลือกเก็บในตู้เย็นได้ประมาณ 1 สัปดาห์ครับ ถ้าปอกแล้วให้ใส่กล่องปิดฝา และกินให้หมดภายใน 2 วัน
+
+    หวังว่าจะเป็นประโยชน์นะครับ
+  expected_characteristics:
+    - deletes the opener and the closer; the answer becomes the first line
+    - keeps 1 สัปดาห์, กล่องปิดฝา and 2 วัน
+  bad_examples:
+    - "ได้เลยครับ นี่คือคำตอบ ไข่ต้มทั้งเปลือกเก็บในตู้เย็นได้ประมาณ 1 สัปดาห์ครับ ถ้าปอกแล้วให้ใส่กล่องปิดฝา และกินให้หมดภายใน 2 วัน หากมีข้อสงสัยเพิ่มเติมสอบถามได้เลยครับ"
+    - "ไข่ต้มเก็บในตู้เย็นได้ประมาณ 1 สัปดาห์ครับ"
+  good_examples:
+    - "ไข่ต้มทั้งเปลือกเก็บในตู้เย็นได้ประมาณ 1 สัปดาห์ครับ ถ้าปอกแล้วให้ใส่กล่องปิดฝา และกินให้หมดภายใน 2 วัน"
+  evaluation_notes: >
+    Chatbot opener and closer: "Order-taking opener" and "Chatbot closer" rows in
+    review/thai-ai-smells.md, core/conciseness.md "เปิดและปิดแบบแชทบอท". The question is
+    not yes/no, so แน่นอน is not itself the answer. Traps: swapping in different stock
+    phrases (conciseness.md says rewording them is not a fix), and trimming so hard the
+    peeled-egg condition disappears.
+
+- id: struct-003
+  context: social
+  audience: ผู้อ่านทั่วไป
+  input: "ขอบคุณลูกค้าทุกท่านที่ไว้วางใจ ทีมเราทำงานอย่างรวดเร็ว แม่นยำ และมีประสิทธิภาพ เดือนที่ผ่านมาเราติดตั้งแอร์ให้ลูกค้าไปแล้ว 214 เครื่อง โดยส่วนใหญ่เสร็จภายในวันเดียว"
+  expected_characteristics:
+    - drops the three unsupported adjectives and lets the real figures carry the claim
+    - keeps 214 เครื่อง and เสร็จภายในวันเดียว; invents no evidence for แม่นยำ or มีประสิทธิภาพ
+  bad_examples:
+    - "ขอบคุณลูกค้าทุกท่านที่ไว้วางใจ ทีมเราไว ชัวร์ คุ้ม เดือนที่ผ่านมาเราติดตั้งแอร์ให้ลูกค้าไปแล้ว 214 เครื่อง โดยส่วนใหญ่เสร็จภายในวันเดียว"
+    - "ขอบคุณลูกค้าทุกท่านที่ไว้วางใจ เดือนที่ผ่านมาเราติดตั้งแอร์ไปแล้ว 214 เครื่อง ส่วนใหญ่เสร็จในวันเดียว และไม่มีงานไหนต้องกลับไปแก้เลย"
+  good_examples:
+    - "ขอบคุณลูกค้าทุกท่านที่ไว้วางใจ เดือนที่ผ่านมาทีมเราติดตั้งแอร์ให้ลูกค้าไปแล้ว 214 เครื่อง ส่วนใหญ่เสร็จภายในวันเดียว"
+  evaluation_notes: >
+    "Rule of three" row in review/thai-ai-smells.md and core/natural-thai.md,
+    "คำคุณศัพท์สามคำ". The post already has the measurable fact the rule asks for, so the
+    fix is deletion. Traps: replacing one triad with a slangier triad, and inventing a
+    zero-rework claim to back แม่นยำ, which adds a fact the company never stated.
+
+- id: formal-001
+  context: formal
+  audience: หน่วยงานราชการ/งานวิชาการ
+  input: "ตามที่สำนักงานได้แจ้งให้หน่วยงานในสังกัดส่งแผนการใช้จ่ายงบประมาณประจำปี พ.ศ. 2570 ภายในวันที่ 30 พฤศจิกายน 2569 นั้น เนื่องจากระบบรับเอกสารอิเล็กทรอนิกส์ขัดข้อง สำนักงานจึงขอขยายกำหนดส่งแผนดังกล่าวออกไปเป็นวันที่ 15 ธันวาคม 2569 ทั้งนี้ หน่วยงานที่ได้ส่งแผนแล้วไม่ต้องส่งซ้ำ"
+  expected_characteristics:
+    - recognizes ตามที่...นั้น, ดังกล่าว and ทั้งนี้ as the correct register for an official letter
+    - recommends NO CHANGE
+  bad_examples:
+    - "สำนักงานขอเลื่อนส่งแผนงบปี 2570 เป็นวันที่ 15 ธันวาคม 2569 นะครับ เพราะระบบรับเอกสารล่ม ใครส่งแล้วไม่ต้องส่งซ้ำ"
+    - "any rewrite that removes ดังกล่าว or ทั้งนี้ as AI smells"
+  good_examples:
+    - "(no change — already correct)"
+  evaluation_notes: >
+    FALSE-POSITIVE control, ADVERSARIAL. contexts/formal.md says ดังกล่าว and ทั้งนี้ are the
+    right register here, and review/thai-ai-smells.md lists both under "The five words
+    that must never become a blacklist entry". ดังกล่าว points back to the plan named
+    earlier and ทั้งนี้ introduces the rule for units that already submitted, each used
+    once. Trap: a casual rewrite that reads easier but mixes particles into an official
+    letter (contexts/formal.md forbids นะครับ in the body).
+
+- id: slides-001
+  context: slides
+  audience: หัวหน้า/ผู้บริหาร
+  input: |
+    ภาพรวมผลประกอบการ
+    - รายได้รวม 48.2 ล้านบาท เพิ่มขึ้น 9% จากปีก่อน
+    - กำไรสุทธิ 5.1 ล้านบาท
+    - ต้นทุนวัตถุดิบเพิ่มขึ้น 14% จากราคาแป้งและน้ำตาล
+    - อัตรากำไรขั้นต้นลดลงจาก 31% เหลือ 27%
+    - ยอดขายออนไลน์คิดเป็น 22% ของรายได้รวม
+    - โดยรวมแล้วผลประกอบการปีนี้ถือว่าอยู่ในเกณฑ์ที่น่าพอใจ
+  expected_characteristics:
+    - turns the topic title into an assertion headline built only from figures on the slide
+    - shortens bullets and drops the closing bullet that only judges and repeats
+    - keeps every figure exactly (48.2, 9%, 5.1, 14%, 31%, 27%, 22%)
+  bad_examples:
+    - |
+      สรุปผลประกอบการประจำปี
+      - **รายได้:** 48.2 ล้านบาท (+9%)
+      - **กำไรสุทธิ:** 5.1 ล้านบาท
+      - **ต้นทุน:** เพิ่มขึ้น 14%
+      - **สรุป:** อยู่ในเกณฑ์น่าพอใจ
+    - |
+      รายได้โตเกือบ 10% กำไรดีขึ้นทุกด้าน
+      - รายได้ราว 48 ล้านบาท
+      - ออนไลน์โตแรง
+  good_examples:
+    - |
+      รายได้โตจากปีก่อน 9% แต่อัตรากำไรขั้นต้นลดจาก 31% เหลือ 27%
+      - รายได้รวม 48.2 ล้านบาท กำไรสุทธิ 5.1 ล้านบาท
+      - ต้นทุนวัตถุดิบเพิ่ม 14% จากราคาแป้งและน้ำตาล
+      - ยอดขายออนไลน์คิดเป็น 22% ของรายได้รวม
+  evaluation_notes: >
+    contexts/slides.md: headline as assertion, not topic (assertion-evidence), and no
+    bullet that repeats the headline or only judges. The good headline uses two figures
+    already on the slide and makes no new causal claim. Traps: renaming the topic
+    title, rebuilding the bullets as bold label + colon, and the second bad example,
+    which rounds numbers and asserts "กำไรดีขึ้นทุกด้าน" while the margin actually fell.
+
+- id: slides-002
+  context: slides
+  audience: หัวหน้า/ผู้บริหาร
+  input: |
+    ข้อความบนสไลด์
+    ไตรมาสที่ 3 มีจำนวนลูกค้าใหม่เพิ่มขึ้นทั้งสิ้น 340 ราย โดยช่องทางที่มีสัดส่วนสูงที่สุดได้แก่การโฆษณาผ่านแพลตฟอร์ม TikTok คิดเป็นร้อยละ 58 ของลูกค้าใหม่ทั้งหมด
+
+    speaker notes
+    ไตรมาสที่ 3 มีจำนวนลูกค้าใหม่เพิ่มขึ้นทั้งสิ้น 340 ราย โดยช่องทางที่มีสัดส่วนสูงที่สุดได้แก่การโฆษณาผ่านแพลตฟอร์ม TikTok คิดเป็นร้อยละ 58 ของลูกค้าใหม่ทั้งหมด
+  expected_characteristics:
+    - rewrites the notes as something a presenter would say aloud
+    - keeps ไตรมาส 3, 340 ราย, TikTok and 58%
+    - adds no reason, budget or source the input does not give; flags that the notes could carry presenter-only context if the user supplies it
+  bad_examples:
+    - "any notes left identical to the slide text"
+    - "ไตรมาสนี้เราได้ลูกค้าใหม่ 340 ราย ส่วนใหญ่มาจาก TikTok เพราะเราเพิ่มงบโฆษณาเป็นสองเท่า"
+  good_examples:
+    - "ไตรมาส 3 เราได้ลูกค้าใหม่ 340 ราย ในนี้ 58% มาจากโฆษณาบน TikTok"
+  evaluation_notes: >
+    contexts/slides.md: speaker notes are spoken language, not a copy of the slide.
+    The input notes are written-report Thai (ทั้งสิ้น, ได้แก่, ร้อยละ) that sounds read-out
+    when spoken. Traps: leaving the copy as is, and filling the gap with an invented
+    reason for the TikTok share. The good example adds no particle; the presenter's
+    ครับ/ค่ะ is theirs to add (contexts/messaging.md on not guessing gender).
+
+- id: punct-007
+  context: social
+  audience: ผู้อ่านทั่วไป
+  input: "ผมได้เข้าร่วมทีม ABC แล้วครับ — ช่วงที่ผ่านมาสอนให้ผมอดทนและไม่ยอมแพ้ง่ายๆ"
+  expected_characteristics:
+    - removes the em dash and lets a space do the separating
+    - keeps ทีม ABC and the existing ครับ exactly; adds no emoji, hashtag or new claim
+  bad_examples:
+    - "ผมได้เข้าร่วมทีม ABC แล้วครับ, ช่วงที่ผ่านมาสอนให้ผมอดทนและไม่ยอมแพ้ง่ายๆ"
+    - "🚀 ผมได้เข้าร่วมทีม ABC แล้วครับ! ช่วงที่ผ่านมาสอนให้ผมอดทน มุ่งมั่น และไม่ยอมแพ้ #NewJourney"
+  good_examples:
+    - "ผมได้เข้าร่วมทีม ABC แล้วครับ ช่วงที่ผ่านมาสอนให้ผมอดทนและไม่ยอมแพ้ง่ายๆ"
+  evaluation_notes: >
+    Em dash case for contexts/social.md, built from its LinkedIn example. One `—` in a
+    personal post is still the "Em dash in Thai prose" row in review/thai-ai-smells.md,
+    and a space is the whole fix. Traps: the "Comma swapped in for em dash" row, and
+    "improving" the post with a leading emoji, a hashtag and a rule-of-three list,
+    which adds the very decoration contexts/social.md tells the writer to remove.
+
+- id: punct-008
+  context: formal
+  audience: หน่วยงานราชการ/งานวิชาการ
+  input: "ที่ประชุมมีมติอนุมัติงบประมาณ — ทั้งนี้ ให้ฝ่ายการเงินดำเนินการเบิกจ่าย → รายงานผลภายใน 30 วัน"
+  expected_characteristics:
+    - removes the em dash and writes the arrow as a Thai connector (และ, แล้ว)
+    - keeps ทั้งนี้ and ดำเนินการ because they are the register of a meeting resolution
+    - keeps ภายใน 30 วัน exactly and adds no particle
+  bad_examples:
+    - "ที่ประชุมมีมติอนุมัติงบประมาณ, ทั้งนี้ ให้ฝ่ายการเงินดำเนินการเบิกจ่าย แล้วรายงานผลภายใน 30 วัน"
+    - "ที่ประชุมอนุมัติงบแล้ว ให้การเงินเบิกจ่ายแล้วรายงานภายใน 30 วันนะครับ"
+  good_examples:
+    - "ที่ประชุมมีมติอนุมัติงบประมาณ ทั้งนี้ ให้ฝ่ายการเงินดำเนินการเบิกจ่ายและรายงานผลภายใน 30 วัน"
+  evaluation_notes: >
+    Em dash and arrow case for contexts/formal.md, taken from its meeting resolution
+    example. The "Em dash in Thai prose" and "Symbols standing in for connectors" rows
+    in review/thai-ai-smells.md apply, but only the marks change. ทั้งนี้ and ดำเนินการ
+    sit in "The five words that must never become a blacklist entry" and are correct
+    in a resolution. Traps: swapping the dash for a comma, and a casual rewrite that
+    drops the formal register and adds นะครับ, which contexts/formal.md forbids.
+
+- id: punct-009
+  context: slides
+  audience: หัวหน้า/ผู้บริหาร
+  input: |
+    ลูกค้าใหม่เพิ่มขึ้น 340 ราย — มาจากช่องทางออนไลน์
+    ลูกค้าเดิมซื้อต่อครั้งเท่าเดิม → การเติบโตมาจากลูกค้าใหม่
+  expected_characteristics:
+    - removes the em dash and writes the arrow as a Thai connector (จึง)
+    - treats the arrow as text in a sentence, not part of a diagram
+    - keeps 340 ราย and ช่องทางออนไลน์ exactly
+  bad_examples:
+    - |
+      ลูกค้าใหม่เพิ่มขึ้น 340 ราย มาจากช่องทางออนไลน์
+      ลูกค้าเดิมซื้อต่อครั้งเท่าเดิม → การเติบโตมาจากลูกค้าใหม่
+    - |
+      ลูกค้าใหม่เพิ่มขึ้นราว 300 ราย, มาจากช่องทางออนไลน์
+      ลูกค้าเดิมซื้อต่อครั้งเท่าเดิม, การเติบโตมาจากลูกค้าใหม่
+  good_examples:
+    - |
+      ลูกค้าใหม่เพิ่มขึ้น 340 ราย มาจากช่องทางออนไลน์
+      ลูกค้าเดิมซื้อต่อครั้งเท่าเดิม การเติบโตจึงมาจากลูกค้าใหม่
+  evaluation_notes: >
+    Em dash and arrow case for contexts/slides.md, built from its slide bullet example.
+    The file says em dash and arrows get no exception because the text is on a slide;
+    only an arrow inside a real diagram is fine. Rows: "Em dash in Thai prose" and
+    "Symbols standing in for connectors" in review/thai-ai-smells.md. Traps: keeping
+    the arrow on the grounds that slides are terse, and a comma swap that also rounds
+    340 to ราว 300, which is a meaning-preservation failure.

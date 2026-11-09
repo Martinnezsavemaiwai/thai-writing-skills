@@ -1,0 +1,65 @@
+# Example glossary. Copy this file into a real project and replace every entry —
+# these values are illustrative, not prescriptive (see terminology.md).
+
+- term: order
+  preferred: "Order"
+  thai:
+    preferred: "รายการสั่งซื้อ"
+    avoid:
+      - "คำสั่งซื้อ"
+      - "ออเดอร์"
+  definition: >
+    A single purchase transaction initiated by a customer, containing one or more line items.
+  contexts:
+    - checkout
+    - order-history
+    - customer-support
+  notes: >
+    Distinct from "cart" (ตะกร้าสินค้า), which is pre-purchase and never becomes an
+    "order" until checkout completes.
+
+- term: cart
+  preferred: "Cart"
+  thai:
+    preferred: "ตะกร้าสินค้า"
+    avoid:
+      - "รถเข็น"
+  definition: >
+    Items a customer has selected but not yet purchased.
+  contexts:
+    - product-browsing
+    - checkout
+  notes: >
+    Becomes an "order" only after checkout completes — never call cart contents
+    "รายการสั่งซื้อ" before that point.
+
+- term: login
+  preferred: "Log in"
+  thai:
+    preferred: "เข้าสู่ระบบ"
+    alternatives:
+      - "ล็อกอิน"   # understandable, common in the wild, just not this product's house choice
+    avoid: []
+  definition: >
+    The action of authenticating into the product with existing credentials.
+  contexts:
+    - auth-screens
+    - session-expired-prompts
+  notes: >
+    This product chose the translated form over the transliteration; both are
+    common in the wild (see terminology.md) — record the choice once, apply everywhere.
+
+- term: account
+  preferred: "Account"
+  thai:
+    preferred: "บัญชีผู้ใช้"
+    avoid:
+      - "บัญชี"
+  definition: >
+    A user's identity and profile within the product.
+  contexts:
+    - settings
+    - support
+  notes: >
+    Uses the more explicit "บัญชีผู้ใช้" rather than "บัญชี" because this product
+    also has financial-account features where "บัญชี" alone would be ambiguous.
